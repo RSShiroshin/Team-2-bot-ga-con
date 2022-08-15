@@ -1,24 +1,49 @@
 import io.socket.emitter.Emitter;
 import jsclub.codefest.sdk.model.Hero;
 import jsclub.codefest.sdk.socket.data.GameInfo;
+import jsclub.codefest.sdk.socket.data.MapInfo;
 import jsclub.codefest.sdk.util.GameUtil;
+
+import java.util.Random;
 
 public class player2 {
     final static String SERVER_URL = "https://codefest.jsclub.me/";
-    final static String PLAYER_ID = "player1-xxx";
-    final static String GAME_ID = "e4931658-52d5-495f-835d-02cd70c22003";
+    final static String PLAYER_ID = "player2-xxx";
+    final static String GAME_ID = "ce05572b-2e50-46a5-9d44-2fae35aeb0e0";
 
+    public static String getRandomPath(int length) {
+        Random rand = new Random();
+        StringBuilder sb = new StringBuilder();
+
+        for(int i = 0; i < length; ++i) {
+            int random_integer = rand.nextInt(5);
+            sb.append("1234b".charAt(random_integer));
+        }
+
+        return sb.toString();
+    }
     public static void main(String[] args) {
-        Hero randomPlayer = new Hero(PLAYER_ID, GAME_ID);
+        Hero player2 = new Hero(PLAYER_ID, GAME_ID);
 
 
         Emitter.Listener onTickTackListener = objects -> {
             GameInfo gameInfo = GameUtil.getGameInfo(objects);
-            System.out.println("123");
+            MapInfo mapInfo=gameInfo.map_info;
+            mapInfo.updateMapInfo();
+            int[][] map=mapInfo.mapMatrix;
+            for (int i=0;i<map.length;i++)
+            {
+                for (int j=0;j<map[0].length;j++)
+                    System.out.print(map[i][j]+" ");
+                System.out.println();
+            }
+            player2.move(getRandomPath(10));
+
+//            player2.move("b");
         };
 
-        randomPlayer.setOnTickTackListener(onTickTackListener);
+        player2.setOnTickTackListener(onTickTackListener);
 
-        randomPlayer.connectToServer(SERVER_URL);
+        player2.connectToServer(SERVER_URL);
     }
 }
