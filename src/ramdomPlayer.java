@@ -36,4 +36,50 @@ public class ramdomPlayer {
 
         randomPlayer.connectToServer(SERVER_URL);
     }
+
+    public static boolean canPlaceBombHorizontal(Position current, int[][] mapInfo) {
+        for (int i = current.getCol() + 1; i < mapInfo.length; i++) {
+            if (mapInfo[i][current.getRow()] == 0) {
+                if (mapInfo[i][current.getRow() - 1] == 0 || mapInfo[i][current.getRow() + 1] == 0) {
+                    return true;
+                } else {
+                    break;
+                }
+            }
+        }
+        for (int i = current.getCol() - 1; i >= 0; i--) {
+            if (mapInfo[i][current.getRow()] == 0) {
+                if (mapInfo[i][current.getRow() - 1] == 0 || mapInfo[i][current.getRow() + 1] == 0) {
+                    return true;
+                } else {
+                    break;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean canPlaceBombVertical(Position current, int[][] mapInfo){
+        for (int i = current.getRow() +1; i < mapInfo[0].length; i++) {
+            if(mapInfo[current.getCol()][i]==0){
+                if(mapInfo[current.getCol()-1][i]==0 || mapInfo[current.getCol()+1][i]==0){
+                    return true;
+                }
+            }
+            else{
+                break;
+            }
+        }
+        for (int i = current.getRow()-1; i > 0; i--) {
+            if(mapInfo[current.getCol()][i]==0){
+                if(mapInfo[current.getCol()-1][i]==0 || mapInfo[current.getCol()+1][i]==0){
+                    return true;
+                }
+            }
+            else{
+                break;
+            }
+        }
+        return false;
+    }
 }
