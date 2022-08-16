@@ -136,16 +136,45 @@ public class ramdomPlayer {
 
                 if (target != null) {
                     path = AStarSearch.aStarSearch(mapInfo.mapMatrix, restrictPosition, mapInfo.getCurrentPosition(randomPlayer), target);
-
+                    String smallPath = path.substring(0,1);
                     if(checkPlaceBomb(balkPos, surround)) {
                         randomPlayer.move("b");
-                        randomPlayer.move("4");
+                        for(int i = 0; i<restrictPosition.size(); i++) {
+                            if(!mapInfo.getCurrentPosition(randomPlayer).nextPosition(1,1).equals(restrictPosition.get(i))){
+                                randomPlayer.move("1");
+                            }
+                            if(!mapInfo.getCurrentPosition(randomPlayer).nextPosition(2,1).equals(restrictPosition.get(i))){
+                                randomPlayer.move("2");
+                            }
+                            if(!mapInfo.getCurrentPosition(randomPlayer).nextPosition(3,1).equals(restrictPosition.get(i))){
+                                randomPlayer.move("3");
+                            }
+                            if(!mapInfo.getCurrentPosition(randomPlayer).nextPosition(4,1).equals(restrictPosition.get(i))){
+                                randomPlayer.move("4");
+                            }
+                            if(!mapInfo.getCurrentPosition(randomPlayer).nextPosition(1,1).nextPosition(3,1).equals(restrictPosition.get(i))){
+                                randomPlayer.move("1");
+                                randomPlayer.move("3");
+                            }
+                            if(!mapInfo.getCurrentPosition(randomPlayer).nextPosition(1,1).nextPosition(4,1).equals(restrictPosition.get(i))){
+                                randomPlayer.move("1");
+                                randomPlayer.move("4");
+                            }
+                            if(!mapInfo.getCurrentPosition(randomPlayer).nextPosition(2,1).nextPosition(3,1).equals(restrictPosition.get(i))){
+                                randomPlayer.move("2");
+                                randomPlayer.move("3");
+                            }
+                            if(!mapInfo.getCurrentPosition(randomPlayer).nextPosition(2,1).nextPosition(4,1).equals(restrictPosition.get(i))){
+                                randomPlayer.move("2");
+                                randomPlayer.move("4");
+                            }
+                        }
 //                        if(bombPos.contains(mapInfo.getCurrentPosition(randomPlayer))){
 //                            restrictPosition.add(mapInfo.getCurrentPosition(randomPlayer));
 //                            System.out.println(mapInfo.getCurrentPosition(randomPlayer).getCol()+"-"+mapInfo.getCurrentPosition(randomPlayer).getRow());
 //                        }
                     } else
-                        randomPlayer.move(path);
+                        randomPlayer.move(smallPath);
                 }
 
         };
