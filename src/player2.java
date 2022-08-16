@@ -9,7 +9,7 @@ import java.util.Random;
 public class player2 {
     final static String SERVER_URL = "https://codefest.jsclub.me/";
     final static String PLAYER_ID = "player2-xxx";
-    final static String GAME_ID = "ce05572b-2e50-46a5-9d44-2fae35aeb0e0";
+    final static String GAME_ID = "b010351f-ef21-4153-b717-656a3ed6e6d2";
 
     public static String getRandomPath(int length) {
         Random rand = new Random();
