@@ -1,15 +1,13 @@
 import io.socket.emitter.Emitter;
 import jsclub.codefest.sdk.algorithm.AStarSearch;
 import jsclub.codefest.sdk.model.Hero;
+import jsclub.codefest.sdk.socket.data.Bomb;
 import jsclub.codefest.sdk.socket.data.GameInfo;
 import jsclub.codefest.sdk.socket.data.MapInfo;
 import jsclub.codefest.sdk.socket.data.Position;
 import jsclub.codefest.sdk.util.GameUtil;
 
-import javax.xml.xpath.XPathEvaluationResult;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import static java.lang.String.valueOf;
 
@@ -61,7 +59,7 @@ public class ramdomPlayer {
        return check;
     }
 
-    public static boolean checkBomb (List<Position> objList, List<Position> surround){
+    public static boolean checkBomb (List<Bomb> objList, List<Position> surround){
         boolean check = false;
 
         for (int i=0;i<surround.size();i++){
@@ -75,7 +73,23 @@ public class ramdomPlayer {
         return check;
     }
 
+    public static boolean checkSave (List<Bomb> objList, List<Position> surround){
+        boolean check = false;
 
+        for (int i=0;i<surround.size();i++){
+            for (int j=0; j<objList.size();j++){
+                if (surround.get(i).getCol() == objList.get(j).getCol() && surround.get(i).getRow() == objList.get(j).getRow()) {
+                    check = true;
+                }
+            }
+
+        }
+        return check;
+    }
+
+    static List<Position> balkPos = new ArrayList<>();
+    static List<Position> blankPos = new ArrayList<>();
+    static List<Position> bombPos = new ArrayList<>();
 
     public static void main(String[] args) {
         Hero randomPlayer = new Hero(PLAYER_ID, GAME_ID);
@@ -85,8 +99,9 @@ public class ramdomPlayer {
                 MapInfo mapInfo=gameInfo.map_info;
                 mapInfo.updateMapInfo();
 
-                List balkPos = mapInfo.getBalk();
-                List bombPos = mapInfo.getBombs();
+                 balkPos = mapInfo.getBalk();
+                 blankPos = mapInfo.getBlank();
+                 bombPos = mapInfo.getBombList();
 
                 List<Position> restrictPosition = new ArrayList<>();
                 restrictPosition.addAll(mapInfo.teleportGate);
@@ -111,13 +126,8 @@ public class ramdomPlayer {
                 surroundBomb.add(mapInfo.getCurrentPosition(randomPlayer).nextPosition(4, i)) ;
             }
 
+
             //ham check bom thi ne
-            if(checkBomb(bombPos, surroundBomb)) {
-                System.out.println(checkBomb(bombPos, surroundBomb));
-                Position target2 = mapInfo.getBlank().get(0);
-                String path2 = AStarSearch.aStarSearch(mapInfo.mapMatrix, restrictPosition, mapInfo.getCurrentPosition(randomPlayer), target2);
-                randomPlayer.move(path2);
-            }
 
 
             //ve sau lay target den tk gan nhat
@@ -129,6 +139,11 @@ public class ramdomPlayer {
 
                     if(checkPlaceBomb(balkPos, surround)) {
                         randomPlayer.move("b");
+                        randomPlayer.move("4");
+//                        if(bombPos.contains(mapInfo.getCurrentPosition(randomPlayer))){
+//                            restrictPosition.add(mapInfo.getCurrentPosition(randomPlayer));
+//                            System.out.println(mapInfo.getCurrentPosition(randomPlayer).getCol()+"-"+mapInfo.getCurrentPosition(randomPlayer).getRow());
+//                        }
                     } else
                         randomPlayer.move(path);
                 }
