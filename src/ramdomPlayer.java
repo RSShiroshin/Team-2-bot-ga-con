@@ -2,17 +2,16 @@ import jsclub.codefest.sdk.algorithm.*;
 import jsclub.codefest.sdk.model.Hero;
 import io.socket.emitter.Emitter;
 import jsclub.codefest.sdk.socket.data.*;
-
 import jsclub.codefest.sdk.util.GameUtil;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Stack;
 
 public class RandomPlayer {
     final static String SERVER_URL = "https://codefest.jsclub.me/";
     final static String PLAYER_ID = "player1-xxx";
-    final static String GAME_ID = "75c3fec3-9450-42de-9253-5b29ef842028";
+    final static String GAME_ID = "1e86f66d-ad89-484a-a391-87e58100e313";
 
     public static String getRandomPath(int length) {
         Random rand = new Random();
@@ -29,6 +28,7 @@ public class RandomPlayer {
     public static boolean move = true;
     public static int count = 0;
     public static boolean delay = false;
+    public static int checkDelay = 0;
 
     //col la x
     //row la y
@@ -47,7 +47,6 @@ public class RandomPlayer {
             restrictPosition.addAll(map.getTeleportGate());
             restrictPosition.addAll(map.getBalk());
             Position placeBomb = null;
-
             //move để delay vì emitter gọi liên tục dẫn đến khi chưa di chuyển đã gọi đến hàm di chuyển lần nx
             if(move){
                 move = !move;
@@ -57,6 +56,7 @@ public class RandomPlayer {
                     switch (count % 3){
                         // case 0 di chuyen den cho dat bom
                         case 0:
+                            // them điều kiện gần tường thì ms đặt bom
                             if(map.getCurrentPosition(randomPlayer).getCol() == placeBomb.getCol() && map.getCurrentPosition(randomPlayer).getRow() == placeBomb.getRow()){
                                 count++;
                             }
@@ -67,17 +67,21 @@ public class RandomPlayer {
                             randomPlayer.move("b");
                             count++;
                             break;
+
                         // case 2 né bom
                         case 2:
                             delay = !delay;
                             randomPlayer.move(AStarSearch.aStarSearch(mapMatrix, restrictPosition, map.getCurrentPosition(randomPlayer), canPlaceBomb(placeBomb, mapMatrix)));
                             System.out.println(AStarSearch.aStarSearch(mapMatrix, restrictPosition, map.getCurrentPosition(randomPlayer), canPlaceBomb(placeBomb, mapMatrix)));
+                            count++;
                     }
-
 
 //                    System.out.println("Current place: " + map.getCurrentPosition(randomPlayer).getCol() + " " + map.getCurrentPosition(randomPlayer).getRow());
 //                    System.out.println("Bomb place: " + placeBomb.getCol() + " " + placeBomb.getRow());
 //                    System.out.println("Escape place: " + canPlaceBombHorizontal(placeBomb, mapMatrix).getCol() + " " + canPlaceBombHorizontal(placeBomb, mapMatrix).getRow());
+                }
+                else{
+                    randomPlayer.move(AStarSearch.aStarSearch(mapMatrix, restrictPosition, map.getCurrentPosition(randomPlayer), map.getSpoils().get(0)));
                 }
             }
             // delay chống lặp di chuyển
@@ -85,6 +89,13 @@ public class RandomPlayer {
                 //delay đợi bom gần nổ rồi chạy
                 //nếu chạy sớm quá sẽ gọi đến hàm tìm vị trí đặt bom => ăn bom
                 if(delay){
+                    if(checkDelay == 7){
+                        delay = !delay;
+                        checkDelay = 0;
+                    }
+                    else{
+                        checkDelay ++;
+                    }
 
                 }
                 else{
@@ -98,6 +109,13 @@ public class RandomPlayer {
         randomPlayer.connectToServer(SERVER_URL);
     }
 
+    public static ArrayList<Position> getSpoilsPosition(MapInfo map){
+        ArrayList<Position> spoilList = new ArrayList<>();
+        for(Spoil s : map.getSpoils()){
+            spoilList.add(new Position(s.getCol(),s.getRow()));
+        }
+        return spoilList;
+    }
     //ham tra ve vi tri ne sau khi dat bom
     public static Position canPlaceBomb(Position current, int[][] mapInfo) {
         for (int i = current.getCol() + 1; i < mapInfo[0].length; i++) {
@@ -183,7 +201,6 @@ public class RandomPlayer {
                 break;
             }
         }
-
         return null;
     }
 
@@ -196,6 +213,8 @@ public class RandomPlayer {
         }
         return false;
     }
+
+
 }
 
 
