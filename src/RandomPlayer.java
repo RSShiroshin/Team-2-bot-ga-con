@@ -3,15 +3,13 @@ import jsclub.codefest.sdk.model.Hero;
 import io.socket.emitter.Emitter;
 import jsclub.codefest.sdk.socket.data.*;
 import jsclub.codefest.sdk.util.GameUtil;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Stack;
+
+import java.util.*;
 
 public class RandomPlayer {
     final static String SERVER_URL = "https://codefest.jsclub.me/";
     final static String PLAYER_ID = "player1-xxx";
-    final static String GAME_ID = "609d6363-5328-47f9-b84d-e3dcf1cc423e";
+    final static String GAME_ID = "da3334b3-f830-4e06-9132-2010751cad52";
 
 
 
@@ -23,6 +21,18 @@ public class RandomPlayer {
 
     //col la x
     //row la y
+    public static String getRandomPath(int length) {
+        Random rand = new Random();
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            int random_integer = rand.nextInt(5);
+            sb.append("1234".charAt(random_integer));
+        }
+
+        return sb.toString();
+    }
+
     public static void main(String[] args) {
         Hero randomPlayer = new Hero(PLAYER_ID, GAME_ID);
 
@@ -45,8 +55,8 @@ public class RandomPlayer {
             restrictPositionSpoil.addAll(map.getTeleportGate());
 
             // add bomb
-            // restrictPosition.addAll(map.getBombList());
-            restrictPositionSpoil.addAll(map.getBombList());
+            restrictPosition.addAll(getBombList(map));
+            restrictPositionSpoil.addAll(getBombList(map));
 
             // add vi tri cua doi thu
             restrictPosition.add(map.getEnemyPosition(randomPlayer));
@@ -64,7 +74,6 @@ public class RandomPlayer {
             restrictPosition.addAll(map.getBalk());
 
             Position placeBomb = null;
-            System.out.println("Spoil: " + map.getSpoils().get(0).spoil_type);
             //move để delay vì emitter gọi liên tục dẫn đến khi chưa di chuyển đã gọi đến hàm di chuyển lần nx
             if(move){
                 move = !move;
@@ -77,6 +86,9 @@ public class RandomPlayer {
                         case 0:
                             // them điều kiện gần tường thì ms đặt bom
                             //System.out.println("Tim tuong dat bom");
+                            if(placeBomb == null){
+                                randomPlayer.move(getRandomPath(1));
+                            }
                             if (map.getCurrentPosition(randomPlayer).getCol() == placeBomb.getCol()
                                     && map.getCurrentPosition(randomPlayer).getRow() == placeBomb.getRow()
                                     && isNearByWalls(map.getCurrentPosition(randomPlayer), mapMatrix)) {
@@ -104,19 +116,19 @@ public class RandomPlayer {
 
                 // neu co thuoc thi di an thuoc
                 else{
-                    switch (countForGetSpoil % 3){
+                    switch (count % 3){
                         case 0:
                             if(canPlaceBomb(map.getCurrentPosition(randomPlayer), mapMatrix) != null && isNearByWalls(map.getCurrentPosition(randomPlayer), mapMatrix) == true){
-                                countForGetSpoil++;
+                                count++;
                             }
                             randomPlayer.move(AStarSearch.aStarSearch(mapMatrix,
                                     restrictPositionSpoil,
                                     map.getCurrentPosition(randomPlayer),
-                                    getNearestSpoil(map.getSpoils(), map.getCurrentPosition(randomPlayer))));
+                                    getNearestSpoil(getPills(map.getSpoils()), map.getCurrentPosition(randomPlayer))));
                             break;
                         case 1:
                             randomPlayer.move("b");
-                            countForGetSpoil++;
+                            count++;
                             break;
                         case 2:
                             delay = !delay;
@@ -126,8 +138,7 @@ public class RandomPlayer {
                                     map.getCurrentPosition(randomPlayer),
                                     canPlaceBomb(map.getCurrentPosition(randomPlayer), mapMatrix))
                             );
-                            countForGetSpoil++;
-                            count = 0;
+                            count++;
                             break;
                     }
 
@@ -138,7 +149,7 @@ public class RandomPlayer {
                 //delay đợi bom gần nổ rồi chạy
                 //nếu chạy sớm quá sẽ gọi đến hàm tìm vị trí đặt bom => ăn bom
                 if(delay){
-                    if(checkDelay == 8){
+                    if(checkDelay == 9){
                         delay = !delay;
                         checkDelay = 0;
                     }
@@ -276,6 +287,16 @@ public class RandomPlayer {
         return nearest;
     }
 
+    public static List<Spoil> getPills(List<Spoil> spoilList){
+        List<Spoil> pills = new ArrayList<>();
+        for (Spoil s : spoilList){
+            if(s.spoil_type == 5){
+                pills.add(s);
+            }
+        }
+        return pills;
+    }
+
     public static int myMahattanDistance(Spoil a, Position b){
         return Math.abs(a.getCol() - b.getCol()) + Math.abs(a.getRow() - b.getRow());
     }
@@ -296,6 +317,26 @@ public class RandomPlayer {
             positionList.add(d.position);
         }
         return positionList;
+    }
+
+    public static List<Position> getBombList(MapInfo map) {
+        List<Position> output = new ArrayList();
+        Iterator var3 = map.getBombs().iterator();
+
+        while(var3.hasNext()) {
+            Bomb bomb = (Bomb)var3.next();
+            if(!bomb.playerId.equals(PLAYER_ID)){
+                Player player = map.getPlayerByKey(bomb.playerId);
+                output.add(bomb);
+                for(int d = 1; d < 5; ++d) {
+                    for(int p = 1; p <= player.power; ++p) {
+                        Position effBomb = bomb.nextPosition(d, p);
+                        output.add(effBomb);
+                    }
+                }
+            }
+        }
+        return output;
     }
 }
 
