@@ -11,22 +11,13 @@ import java.util.Stack;
 public class RandomPlayer {
     final static String SERVER_URL = "https://codefest.jsclub.me/";
     final static String PLAYER_ID = "player1-xxx";
-    final static String GAME_ID = "1e86f66d-ad89-484a-a391-87e58100e313";
+    final static String GAME_ID = "c6c5ce8f-c3dd-4c4b-bd8d-90e7dc66e36c";
 
-    public static String getRandomPath(int length) {
-        Random rand = new Random();
 
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < length; i++) {
-            int random_integer = rand.nextInt(5);
-            sb.append("1234b".charAt(random_integer));
-        }
-
-        return sb.toString();
-    }
 
     public static boolean move = true;
     public static int count = 0;
+    public static int countForGetSpoil = 0;
     public static boolean delay = false;
     public static int checkDelay = 0;
 
@@ -42,14 +33,42 @@ public class RandomPlayer {
             map.updateMapInfo();
             int[][] mapMatrix = map.mapMatrix;
             String path = "";
-            List<Position> restrictPosition = new ArrayList<>();
+            List<Position> restrictPosition = new ArrayList<>();        // restriction co wall
+            List<Position> restrictPositionSpoil = new ArrayList<>();   // restriction khong co wall
+
+            // add walls khong pha dc
             restrictPosition.addAll(map.getWalls());
+            restrictPositionSpoil.addAll(map.getWalls());
+
+            // add cong tele
             restrictPosition.addAll(map.getTeleportGate());
+            restrictPositionSpoil.addAll(map.getTeleportGate());
+
+            // add bomb
+            // restrictPosition.addAll(map.getBombList());
+            restrictPositionSpoil.addAll(map.getBombList());
+
+            // add vi tri cua doi thu
+            restrictPosition.add(map.getEnemyPosition(randomPlayer));
+            restrictPositionSpoil.add(map.getEnemyPosition(randomPlayer));
+
+            // add virus
+            restrictPosition.addAll(getVirusPosition(map.getVirus()));
+            restrictPositionSpoil.addAll(getVirusPosition(map.getVirus()));
+
+            // add dhuman
+            restrictPosition.addAll(getDHumanPosition(map.getDhuman()));
+            restrictPositionSpoil.addAll(getDHumanPosition(map.getDhuman()));
+
+            // add tuong cho restrictionPosition
             restrictPosition.addAll(map.getBalk());
+
             Position placeBomb = null;
+            System.out.println("Spoil: " + map.getSpoils());
             //move để delay vì emitter gọi liên tục dẫn đến khi chưa di chuyển đã gọi đến hàm di chuyển lần nx
             if(move){
                 move = !move;
+                // khi khong co thuoc thi di pha tuong
                 if(map.getSpoils().size() == 0){
                     placeBomb = findWallToBreak(map.getCurrentPosition(randomPlayer), mapMatrix); // tim cho dat bom
 
@@ -57,31 +76,67 @@ public class RandomPlayer {
                         // case 0 di chuyen den cho dat bom
                         case 0:
                             // them điều kiện gần tường thì ms đặt bom
-                            if(map.getCurrentPosition(randomPlayer).getCol() == placeBomb.getCol() && map.getCurrentPosition(randomPlayer).getRow() == placeBomb.getRow()){
+                            //System.out.println("Tim tuong dat bom");
+                            if(map.getCurrentPosition(randomPlayer).getCol() == placeBomb.getCol()
+                                    && map.getCurrentPosition(randomPlayer).getRow() == placeBomb.getRow()
+                                    && isNearByWalls(map.getCurrentPosition(randomPlayer), mapMatrix)){
                                 count++;
                             }
-                            randomPlayer.move(AStarSearch.aStarSearch(mapMatrix, restrictPosition, map.getCurrentPosition(randomPlayer), placeBomb));
+                            randomPlayer.move(AStarSearch.aStarSearch(mapMatrix, restrictPosition, map.getCurrentPosition(randomPlayer),  findWallToBreak(map.getCurrentPosition(randomPlayer), mapMatrix)));
                             break;
                         // case 1 de dat bom
                         case 1:
+                            //System.out.println("Dat bom khi khong co thuoc");
                             randomPlayer.move("b");
                             count++;
                             break;
 
                         // case 2 né bom
                         case 2:
+                            //System.out.println("ne bom khi khogn co thuoc");
                             delay = !delay;
                             randomPlayer.move(AStarSearch.aStarSearch(mapMatrix, restrictPosition, map.getCurrentPosition(randomPlayer), canPlaceBomb(placeBomb, mapMatrix)));
-                            System.out.println(AStarSearch.aStarSearch(mapMatrix, restrictPosition, map.getCurrentPosition(randomPlayer), canPlaceBomb(placeBomb, mapMatrix)));
+                            System.out.println("Current position: " + map.getCurrentPosition(randomPlayer).getCol() + " " + map.getCurrentPosition(randomPlayer).getRow());
+                            System.out.println("Place bomb: " + canPlaceBomb(placeBomb, mapMatrix).getCol() + " " + canPlaceBomb(placeBomb, mapMatrix).getRow());
+                            System.out.println("Move: " + AStarSearch.aStarSearch(mapMatrix, restrictPosition, map.getCurrentPosition(randomPlayer), canPlaceBomb(placeBomb, mapMatrix)));
                             count++;
+                            break;
                     }
 
 //                    System.out.println("Current place: " + map.getCurrentPosition(randomPlayer).getCol() + " " + map.getCurrentPosition(randomPlayer).getRow());
 //                    System.out.println("Bomb place: " + placeBomb.getCol() + " " + placeBomb.getRow());
 //                    System.out.println("Escape place: " + canPlaceBombHorizontal(placeBomb, mapMatrix).getCol() + " " + canPlaceBombHorizontal(placeBomb, mapMatrix).getRow());
                 }
+
+                // neu co thuoc thi di an thuoc
                 else{
-                    randomPlayer.move(AStarSearch.aStarSearch(mapMatrix, restrictPosition, map.getCurrentPosition(randomPlayer), map.getSpoils().get(0)));
+                    switch (countForGetSpoil % 3){
+                        case 0:
+                            if(canPlaceBomb(map.getCurrentPosition(randomPlayer), mapMatrix) != null && isNearByWalls(map.getCurrentPosition(randomPlayer), mapMatrix)){
+                                countForGetSpoil++;
+                            }
+                            randomPlayer.move(AStarSearch.aStarSearch(mapMatrix,
+                                    restrictPositionSpoil,
+                                    map.getCurrentPosition(randomPlayer),
+                                    getNearestSpoil(map.getSpoils(), map.getCurrentPosition(randomPlayer))));
+                            break;
+                        case 1:
+                            randomPlayer.move("b");
+                            countForGetSpoil++;
+                            break;
+                        case 2:
+                            delay = !delay;
+                            randomPlayer.move(AStarSearch.aStarSearch(
+                                    mapMatrix,
+                                    restrictPosition,
+                                    map.getCurrentPosition(randomPlayer),
+                                    canPlaceBomb(map.getCurrentPosition(randomPlayer), mapMatrix))
+                            );
+                            countForGetSpoil++;
+                            count = 0;
+                            break;
+                    }
+
                 }
             }
             // delay chống lặp di chuyển
@@ -109,6 +164,7 @@ public class RandomPlayer {
         randomPlayer.connectToServer(SERVER_URL);
     }
 
+    // hoi thua nhg co le dung sau
     public static ArrayList<Position> getSpoilsPosition(MapInfo map){
         ArrayList<Position> spoilList = new ArrayList<>();
         for(Spoil s : map.getSpoils()){
@@ -214,7 +270,39 @@ public class RandomPlayer {
         return false;
     }
 
+    public static Position getNearestSpoil(List<Spoil> spoilList, Position current){
+        int min = 100;
+        Position nearest = null;
+        for (Spoil s: spoilList) {
+            if(min > myMahattanDistance(s, current)){
+                min = myMahattanDistance(s, current);
+                nearest = s;
+            }
+        }
+        return nearest;
+    }
 
+    public static int myMahattanDistance(Spoil a, Position b){
+        return Math.abs(a.getCol() - b.getCol()) + Math.abs(a.getRow() - b.getRow());
+    }
+
+    // convert virusList into position of viruslist
+    public static List<Position> getVirusPosition(List<Viruses> virusList){
+        List<Position> positionList = new ArrayList<>();
+        for (Viruses v: virusList) {
+            positionList.add(v.position);
+        }
+        return positionList;
+    }
+
+    // convert dhumanList into position of dhumanList
+    public static List<Position> getDHumanPosition(List<Human> dhuman){
+        List<Position> positionList = new ArrayList<>();
+        for (Human d: dhuman) {
+            positionList.add(d.position);
+        }
+        return positionList;
+    }
 }
 
 
