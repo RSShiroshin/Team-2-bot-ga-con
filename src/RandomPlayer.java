@@ -11,7 +11,7 @@ import java.util.Stack;
 public class RandomPlayer {
     final static String SERVER_URL = "https://codefest.jsclub.me/";
     final static String PLAYER_ID = "player1-xxx";
-    final static String GAME_ID = "c6c5ce8f-c3dd-4c4b-bd8d-90e7dc66e36c";
+    final static String GAME_ID = "609d6363-5328-47f9-b84d-e3dcf1cc423e";
 
 
 
@@ -64,25 +64,25 @@ public class RandomPlayer {
             restrictPosition.addAll(map.getBalk());
 
             Position placeBomb = null;
-            System.out.println("Spoil: " + map.getSpoils());
+            System.out.println("Spoil: " + map.getSpoils().get(0).spoil_type);
             //move để delay vì emitter gọi liên tục dẫn đến khi chưa di chuyển đã gọi đến hàm di chuyển lần nx
             if(move){
                 move = !move;
                 // khi khong co thuoc thi di pha tuong
-                if(map.getSpoils().size() == 0){
+                if(map.getSpoils().size() == 0) {
                     placeBomb = findWallToBreak(map.getCurrentPosition(randomPlayer), mapMatrix); // tim cho dat bom
 
-                    switch (count % 3){
+                    switch (count % 3) {
                         // case 0 di chuyen den cho dat bom
                         case 0:
                             // them điều kiện gần tường thì ms đặt bom
                             //System.out.println("Tim tuong dat bom");
-                            if(map.getCurrentPosition(randomPlayer).getCol() == placeBomb.getCol()
+                            if (map.getCurrentPosition(randomPlayer).getCol() == placeBomb.getCol()
                                     && map.getCurrentPosition(randomPlayer).getRow() == placeBomb.getRow()
-                                    && isNearByWalls(map.getCurrentPosition(randomPlayer), mapMatrix)){
+                                    && isNearByWalls(map.getCurrentPosition(randomPlayer), mapMatrix)) {
                                 count++;
                             }
-                            randomPlayer.move(AStarSearch.aStarSearch(mapMatrix, restrictPosition, map.getCurrentPosition(randomPlayer),  findWallToBreak(map.getCurrentPosition(randomPlayer), mapMatrix)));
+                            randomPlayer.move(AStarSearch.aStarSearch(mapMatrix, restrictPosition, map.getCurrentPosition(randomPlayer), findWallToBreak(map.getCurrentPosition(randomPlayer), mapMatrix)));
                             break;
                         // case 1 de dat bom
                         case 1:
@@ -96,23 +96,17 @@ public class RandomPlayer {
                             //System.out.println("ne bom khi khogn co thuoc");
                             delay = !delay;
                             randomPlayer.move(AStarSearch.aStarSearch(mapMatrix, restrictPosition, map.getCurrentPosition(randomPlayer), canPlaceBomb(placeBomb, mapMatrix)));
-                            System.out.println("Current position: " + map.getCurrentPosition(randomPlayer).getCol() + " " + map.getCurrentPosition(randomPlayer).getRow());
-                            System.out.println("Place bomb: " + canPlaceBomb(placeBomb, mapMatrix).getCol() + " " + canPlaceBomb(placeBomb, mapMatrix).getRow());
-                            System.out.println("Move: " + AStarSearch.aStarSearch(mapMatrix, restrictPosition, map.getCurrentPosition(randomPlayer), canPlaceBomb(placeBomb, mapMatrix)));
                             count++;
                             break;
                     }
 
-//                    System.out.println("Current place: " + map.getCurrentPosition(randomPlayer).getCol() + " " + map.getCurrentPosition(randomPlayer).getRow());
-//                    System.out.println("Bomb place: " + placeBomb.getCol() + " " + placeBomb.getRow());
-//                    System.out.println("Escape place: " + canPlaceBombHorizontal(placeBomb, mapMatrix).getCol() + " " + canPlaceBombHorizontal(placeBomb, mapMatrix).getRow());
                 }
 
                 // neu co thuoc thi di an thuoc
                 else{
                     switch (countForGetSpoil % 3){
                         case 0:
-                            if(canPlaceBomb(map.getCurrentPosition(randomPlayer), mapMatrix) != null && isNearByWalls(map.getCurrentPosition(randomPlayer), mapMatrix)){
+                            if(canPlaceBomb(map.getCurrentPosition(randomPlayer), mapMatrix) != null && isNearByWalls(map.getCurrentPosition(randomPlayer), mapMatrix) == true){
                                 countForGetSpoil++;
                             }
                             randomPlayer.move(AStarSearch.aStarSearch(mapMatrix,
@@ -144,7 +138,7 @@ public class RandomPlayer {
                 //delay đợi bom gần nổ rồi chạy
                 //nếu chạy sớm quá sẽ gọi đến hàm tìm vị trí đặt bom => ăn bom
                 if(delay){
-                    if(checkDelay == 7){
+                    if(checkDelay == 8){
                         delay = !delay;
                         checkDelay = 0;
                     }
