@@ -7,17 +7,19 @@ import jsclub.codefest.sdk.util.GameUtil;
 import java.util.*;
 
 public class RandomPlayer {
+//    private static final String PLAYER_ID = "f5d1bafb-8bee-4c68-a7b6-86834665511a";
+//    private static final String GAME_ID = "22dc8629-f120-433f-bcbc-b2f5b30eccd3";
+//    private static final String SERVER_URL = "http://192.168.0.2:5001/";
+
     final static String SERVER_URL = "https://codefest.jsclub.me/";
-    final static String PLAYER_ID = "player1-xxx";
-    final static String GAME_ID = "da3334b3-f830-4e06-9132-2010751cad52";
-
-
-
+    final static String PLAYER_ID = "player2-xxx";
+    final static String GAME_ID = "13797933-20ac-4a25-96c8-455bfb9e1269";
     public static boolean move = true;
     public static int count = 0;
     public static int countForGetSpoil = 0;
     public static boolean delay = false;
     public static int checkDelay = 0;
+    public static int bombCount = 0;
 
     //col la x
     //row la y
@@ -26,7 +28,7 @@ public class RandomPlayer {
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < length; i++) {
-            int random_integer = rand.nextInt(5);
+            int random_integer = rand.nextInt(4);
             sb.append("1234".charAt(random_integer));
         }
 
@@ -72,41 +74,47 @@ public class RandomPlayer {
 
             // add tuong cho restrictionPosition
             restrictPosition.addAll(map.getBalk());
-
             Position placeBomb = null;
             //move để delay vì emitter gọi liên tục dẫn đến khi chưa di chuyển đã gọi đến hàm di chuyển lần nx
             if(move){
                 move = !move;
                 // khi khong co thuoc thi di pha tuong
-                if(map.getSpoils().size() == 0) {
+                if(getPills(map.getSpoils()).size() == 0) {
                     placeBomb = findWallToBreak(map.getCurrentPosition(randomPlayer), mapMatrix); // tim cho dat bom
-
                     switch (count % 3) {
                         // case 0 di chuyen den cho dat bom
                         case 0:
                             // them điều kiện gần tường thì ms đặt bom
-                            //System.out.println("Tim tuong dat bom");
+                            System.out.println("Tim tuong dat bom");
                             if(placeBomb == null){
                                 randomPlayer.move(getRandomPath(1));
                             }
-                            if (map.getCurrentPosition(randomPlayer).getCol() == placeBomb.getCol()
-                                    && map.getCurrentPosition(randomPlayer).getRow() == placeBomb.getRow()
-                                    && isNearByWalls(map.getCurrentPosition(randomPlayer), mapMatrix)) {
-                                count++;
+                            else{
+                                System.out.println(placeBomb.getCol() + " " + placeBomb.getRow());
+                                if (map.getCurrentPosition(randomPlayer).getCol() == placeBomb.getCol()
+                                        && map.getCurrentPosition(randomPlayer).getRow() == placeBomb.getRow()
+                                        && isNearByWalls(map.getCurrentPosition(randomPlayer), mapMatrix)) {
+                                    count++;
+                                }
+                                randomPlayer.move(AStarSearch.aStarSearch(mapMatrix, restrictPosition, map.getCurrentPosition(randomPlayer), findWallToBreak(map.getCurrentPosition(randomPlayer), mapMatrix)));
                             }
-                            randomPlayer.move(AStarSearch.aStarSearch(mapMatrix, restrictPosition, map.getCurrentPosition(randomPlayer), findWallToBreak(map.getCurrentPosition(randomPlayer), mapMatrix)));
                             break;
                         // case 1 de dat bom
                         case 1:
-                            //System.out.println("Dat bom khi khong co thuoc");
-                            randomPlayer.move("b");
+                            System.out.println("Dat bom khi khong co thuoc");
+                            //if(getDistance(map.getCurrentPosition(randomPlayer), map.getEnemyPosition(randomPlayer)) > 10){
+                                if(map.getPlayerByKey(PLAYER_ID).lives > 1){
+                                    randomPlayer.move("b");
+                                }
+
+                           // }
                             count++;
                             break;
 
                         // case 2 né bom
                         case 2:
-                            //System.out.println("ne bom khi khogn co thuoc");
-                            delay = !delay;
+                            System.out.println("ne bom khi khogn co thuoc");
+                            delay = true;
                             randomPlayer.move(AStarSearch.aStarSearch(mapMatrix, restrictPosition, map.getCurrentPosition(randomPlayer), canPlaceBomb(placeBomb, mapMatrix)));
                             count++;
                             break;
@@ -115,30 +123,40 @@ public class RandomPlayer {
                 }
 
                 // neu co thuoc thi di an thuoc
-                else{
-                    switch (count % 3){
+                else if(getPills(map.getSpoils()).size() != 0){
+                    switch (countForGetSpoil % 3){
                         case 0:
-                            if(canPlaceBomb(map.getCurrentPosition(randomPlayer), mapMatrix) != null && isNearByWalls(map.getCurrentPosition(randomPlayer), mapMatrix) == true){
-                                count++;
+                            if(canPlaceBomb(map.getCurrentPosition(randomPlayer), mapMatrix) != null
+                                    && isNearByWalls(map.getCurrentPosition(randomPlayer), mapMatrix) == true
+                                    && AStarSearch.aStarSearch(mapMatrix,
+                                        restrictPosition,
+                                        map.getCurrentPosition(randomPlayer),
+                                        getNearestSpoil(map.getSpoils(), map.getCurrentPosition(randomPlayer))).isEmpty()
+                            ){
+                                countForGetSpoil++;
                             }
                             randomPlayer.move(AStarSearch.aStarSearch(mapMatrix,
                                     restrictPositionSpoil,
                                     map.getCurrentPosition(randomPlayer),
-                                    getNearestSpoil(getPills(map.getSpoils()), map.getCurrentPosition(randomPlayer))));
+                                    getNearestSpoil(map.getSpoils(), map.getCurrentPosition(randomPlayer))));
                             break;
                         case 1:
-                            randomPlayer.move("b");
-                            count++;
+                            //if(getDistance(map.getCurrentPosition(randomPlayer), map.getEnemyPosition(randomPlayer)) > 10){
+                                if(map.getPlayerByKey(PLAYER_ID).lives > 1){
+                                    randomPlayer.move("b");
+                                }
+                           // }
+                            countForGetSpoil++;
                             break;
                         case 2:
-                            delay = !delay;
+                            delay = true;
                             randomPlayer.move(AStarSearch.aStarSearch(
                                     mapMatrix,
                                     restrictPosition,
                                     map.getCurrentPosition(randomPlayer),
                                     canPlaceBomb(map.getCurrentPosition(randomPlayer), mapMatrix))
                             );
-                            count++;
+                            countForGetSpoil++;
                             break;
                     }
 
@@ -149,8 +167,8 @@ public class RandomPlayer {
                 //delay đợi bom gần nổ rồi chạy
                 //nếu chạy sớm quá sẽ gọi đến hàm tìm vị trí đặt bom => ăn bom
                 if(delay){
-                    if(checkDelay == 9){
-                        delay = !delay;
+                    if(checkDelay == 1){
+                        delay = false;
                         checkDelay = 0;
                     }
                     else{
@@ -337,6 +355,10 @@ public class RandomPlayer {
             }
         }
         return output;
+    }
+
+    public static int getDistance(Position current, Position enemy){
+        return AStarSearch.manhattanDistance(current, enemy);
     }
 }
 
