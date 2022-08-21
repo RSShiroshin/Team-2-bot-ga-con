@@ -13,7 +13,7 @@ public class RandomPlayer {
 
     final static String SERVER_URL = "https://codefest.jsclub.me/";
     final static String PLAYER_ID = "player2-xxx";
-    final static String GAME_ID = "13797933-20ac-4a25-96c8-455bfb9e1269";
+    final static String GAME_ID = "519ad520-9dd4-44a0-9f2e-e3d88f07f8c8";
     public static boolean move = true;
     public static int count = 0;
     public static int countForGetSpoil = 0;
@@ -113,7 +113,7 @@ public class RandomPlayer {
 
                         // case 2 né bom
                         case 2:
-                            System.out.println("ne bom khi khogn co thuoc");
+                            System.out.println("ne bom khi khong co thuoc");
                             delay = true;
                             randomPlayer.move(AStarSearch.aStarSearch(mapMatrix, restrictPosition, map.getCurrentPosition(randomPlayer), canPlaceBomb(placeBomb, mapMatrix)));
                             count++;
@@ -126,6 +126,7 @@ public class RandomPlayer {
                 else if(getPills(map.getSpoils()).size() != 0){
                     switch (countForGetSpoil % 3){
                         case 0:
+                            // neu ket thi pha bom
                             if(canPlaceBomb(map.getCurrentPosition(randomPlayer), mapMatrix) != null
                                     && isNearByWalls(map.getCurrentPosition(randomPlayer), mapMatrix) == true
                                     && AStarSearch.aStarSearch(mapMatrix,
@@ -135,10 +136,26 @@ public class RandomPlayer {
                             ){
                                 countForGetSpoil++;
                             }
-                            randomPlayer.move(AStarSearch.aStarSearch(mapMatrix,
-                                    restrictPositionSpoil,
+                            // neu khong ket di duong dai
+                            else if(canPlaceBomb(map.getCurrentPosition(randomPlayer), mapMatrix) != null
+                                    && isNearByWalls(map.getCurrentPosition(randomPlayer), mapMatrix) == true
+                                    && !AStarSearch.aStarSearch(mapMatrix,
+                                    restrictPosition,
                                     map.getCurrentPosition(randomPlayer),
-                                    getNearestSpoil(map.getSpoils(), map.getCurrentPosition(randomPlayer))));
+                                    getNearestSpoil(map.getSpoils(), map.getCurrentPosition(randomPlayer))).isEmpty()){
+                                randomPlayer.move(AStarSearch.aStarSearch(mapMatrix,
+                                        restrictPosition,
+                                        map.getCurrentPosition(randomPlayer),
+                                        getNearestSpoil(map.getSpoils(), map.getCurrentPosition(randomPlayer))));
+                            }
+                            // neu khong di dam thang
+                            else{
+                                randomPlayer.move(AStarSearch.aStarSearch(mapMatrix,
+                                        restrictPositionSpoil,
+                                        map.getCurrentPosition(randomPlayer),
+                                        getNearestSpoil(map.getSpoils(), map.getCurrentPosition(randomPlayer))));
+                            }
+
                             break;
                         case 1:
                             //if(getDistance(map.getCurrentPosition(randomPlayer), map.getEnemyPosition(randomPlayer)) > 10){
